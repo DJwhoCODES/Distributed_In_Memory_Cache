@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 )
@@ -13,14 +14,12 @@ func main() {
 
 	defer connObj.Close()
 
-	msg := "Hello from client!"
-	connObj.Write([]byte(msg))
+	var num int32 = 60
+	binary.Write(connObj, binary.LittleEndian, num)
+	fmt.Println("Sent number:", num)
 
-	buf := make([]byte, 1024)
-	n, err := connObj.Read(buf)
-	if err != nil {
-		panic(err)
-	}
+	var resp int32
+	binary.Read(connObj, binary.LittleEndian, &resp)
 
-	fmt.Println("Server responded:", string(buf[:n]))
+	fmt.Println("Server replied:", resp)
 }

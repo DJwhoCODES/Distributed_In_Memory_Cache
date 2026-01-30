@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 )
@@ -31,15 +32,16 @@ func main() {
 func handleConn(conn net.Conn) {
 	defer conn.Close()
 
-	buf := make([]byte, 1024)
+	var num int32
 
-	n, err := conn.Read(buf)
+	err := binary.Read(conn, binary.LittleEndian, &num)
+
 	if err != nil {
-		fmt.Println("Error Reading:", err)
+		fmt.Println("binary.Read error:", err)
 		return
 	}
 
-	fmt.Println("Received:", string(buf[:n]))
+	fmt.Println("Received number:", num)
 
-	conn.Write([]byte("OK"))
+	binary.Write(conn, binary.LittleEndian, int32(num*2))
 }
