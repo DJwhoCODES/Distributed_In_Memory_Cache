@@ -3,6 +3,8 @@ package proto
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
+	"io"
 )
 
 type Command byte
@@ -46,4 +48,52 @@ func (c *CommandGet) Bytes() []byte {
 	binary.Write(buf, binary.LittleEndian, c.Key)
 
 	return buf.Bytes()
+}
+
+func ParseCommand(r io.Reader) (any, error) {
+	var cmd Command
+	if err := binary.Read(r, binary.LittleEndian, &cmd); err != nil {
+		return nil, err
+	}
+
+	switch cmd {
+	case CmdSet:
+		return parseSet(r)
+	case CmdGet:
+		return parseGet(r)
+	default:
+		return nil, fmt.Errorf("Unknown Command!")
+	}
+}
+
+func parseSet(r io.Reader) (*CommandSet, error) {
+	c := &CommandSet{}
+
+	var keyLen int32
+	binary.Read(r, binary.LittleEndian, &keyLen)
+
+	c.Key = make([]byte, keyLen)
+	binary.Read(r, binary.LittleEndian, &c.Key)
+
+	var valLen int32
+	binary.Read(r, binary.LittleEndian, &valLen)
+
+	c.Value = make([]byte, valLen)
+	binary.Read(r, binary.LittleEndian, &c.Value)
+
+	binary.Read(r, binary.LittleEndian, &c.TTL)
+
+	return c, nil
+}
+
+func parseGet(r io.Reader) (*CommandGet, error) {
+	c := &CommandGet{}
+
+	var keyLen int32
+	binary.Read(r, binary.LittleEndian, &keyLen)
+
+	c.Key = make([]byte, keyLen)
+	binary.Read(r, binary.LittleEndian, &c.Key)
+
+	return c, nil
 }
