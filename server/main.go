@@ -32,16 +32,23 @@ func main() {
 func handleConn(conn net.Conn) {
 	defer conn.Close()
 
-	var num int32
+	var strLen int32
 
-	err := binary.Read(conn, binary.LittleEndian, &num)
-
-	if err != nil {
-		fmt.Println("binary.Read error:", err)
+	if err := binary.Read(conn, binary.LittleEndian, &strLen); err != nil {
+		fmt.Println("Read Length Error:", err)
 		return
 	}
 
-	fmt.Println("Received number:", num)
+	buf := make([]byte, strLen)
+	if err := binary.Read(conn, binary.LittleEndian, &buf); err != nil {
+		fmt.Println("Read String Error:", err)
+		return
+	}
 
-	binary.Write(conn, binary.LittleEndian, int32(num*2))
+	str := string(buf[:strLen])
+	fmt.Println("Received string:", str)
+
+	binary.Write(conn, binary.LittleEndian, int32(len(buf)))
+
+	binary.Write(conn, binary.LittleEndian, buf)
 }

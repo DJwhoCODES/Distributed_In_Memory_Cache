@@ -14,12 +14,21 @@ func main() {
 
 	defer connObj.Close()
 
-	var num int32 = 60
-	binary.Write(connObj, binary.LittleEndian, num)
-	fmt.Println("Sent number:", num)
+	msg := "hello world"
+	data := []byte(msg)
 
-	var resp int32
-	binary.Read(connObj, binary.LittleEndian, &resp)
+	binary.Write(connObj, binary.LittleEndian, int32(len(data)))
 
-	fmt.Println("Server replied:", resp)
+	binary.Write(connObj, binary.LittleEndian, data)
+
+	fmt.Println("Sent:", msg)
+
+	var respLen int32
+
+	binary.Read(connObj, binary.LittleEndian, &respLen)
+
+	respBuf := make([]byte, respLen)
+	binary.Read(connObj, binary.LittleEndian, &respBuf)
+
+	fmt.Println("Received:", string(respBuf[:respLen]))
 }
